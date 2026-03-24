@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MacroLens — 글로벌 유동성 모니터</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 /* ═══════════════════════════════════════════
    CSS 변수 — 라이트 / 다크 테마
@@ -265,6 +266,69 @@ input[type=range]{flex:1;accent-color:var(--amber);}
 .mobile-top .fx-mini{background:var(--bg2);border:0.5px solid var(--border);border-radius:6px;padding:5px 8px;font-size:10px;flex:1;min-width:80px;}
 .mt-lbl{font-size:8px;color:var(--txt2);}
 .mt-val{font-weight:700;color:var(--txt);}
+/* ═══════════════════════════════════════════
+   차트 패널 (인라인 아코디언)
+═══════════════════════════════════════════ */
+.kpi-card-wrap{position:relative;cursor:pointer;}
+.kpi-card-wrap:hover .card{border-color:var(--amber) !important;transition:border-color .15s;}
+.kpi-card-wrap .expand-hint{
+  position:absolute;bottom:5px;right:7px;
+  font-size:8px;color:var(--txt3);
+  transition:color .15s;
+}
+.kpi-card-wrap:hover .expand-hint{color:var(--amber);}
+.kpi-card-wrap.expanded .expand-hint{color:var(--amber);transform:rotate(180deg);}
+.kpi-card-wrap.expanded .card{border-color:var(--amber) !important;border-bottom-left-radius:0;border-bottom-right-radius:0;}
+
+/* 차트 패널 — grid-column:1/-1 로 전체 폭 */
+.chart-panel{
+  grid-column: 1 / -1;
+  background:var(--bg2);
+  border:0.5px solid var(--amber);
+  border-top:none;
+  border-radius:0 0 7px 7px;
+  padding:14px 16px 12px;
+  display:none;
+  flex-direction:column;
+  gap:10px;
+  transition:background .2s;
+}
+.chart-panel.open{display:flex;}
+.cp-header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.cp-title{font-size:12px;font-weight:700;color:var(--txt);flex:1;}
+.cp-series{font-size:9px;color:var(--txt3);font-family:"SF Mono","Fira Code",monospace;}
+.cp-period-btns{display:flex;gap:3px;}
+.cp-btn{
+  font-size:9px;padding:3px 8px;border-radius:3px;
+  cursor:pointer;border:0.5px solid var(--border);
+  background:var(--bg3);color:var(--txt2);
+  font-family:inherit;transition:background .1s;
+}
+.cp-btn.active{background:var(--abg);color:var(--atx);border-color:var(--amber);}
+.cp-close{
+  background:none;border:none;color:var(--txt3);
+  font-size:14px;cursor:pointer;padding:0 2px;
+  line-height:1;transition:color .1s;
+}
+.cp-close:hover{color:var(--rtx);}
+.cp-canvas-wrap{position:relative;height:180px;}
+.cp-canvas-wrap canvas{width:100% !important;}
+.cp-loading{
+  height:180px;display:flex;align-items:center;justify-content:center;
+  color:var(--txt3);font-size:11px;
+}
+.cp-interp{
+  background:var(--bg);border-left:3px solid var(--amber);
+  border-radius:0 4px 4px 0;padding:8px 11px;
+  font-size:10px;color:var(--txt2);line-height:1.65;
+}
+.cp-interp strong{color:var(--txt);}
+.cp-interp .ci-badge{
+  display:inline-flex;gap:4px;align-items:center;
+  background:var(--bg2);border:0.5px solid var(--border);
+  border-radius:4px;padding:3px 7px;margin:2px 3px 2px 0;
+  font-size:9px;font-weight:600;
+}
 </style>
 </head>
 <body>
@@ -350,19 +414,19 @@ input[type=range]{flex:1;accent-color:var(--amber);}
 
     <!-- 금융배관 KPI -->
     <div style="margin-top:4px;">
-      <div class="kpi-grid c4">
-        <div class="card" id="kA1"><div class="kp-name">은행 준비금</div><div class="kp-val loading" id="vA1">로딩중</div><div class="kp-delta" id="dA1">—</div></div>
-        <div class="card" id="kA2"><div class="kp-name">SOFR</div><div class="kp-val loading" id="vA2">로딩중</div><div class="kp-delta" id="dA2">—</div></div>
-        <div class="card" id="kA3"><div class="kp-name">IORB</div><div class="kp-val loading" id="vA3">로딩중</div><div class="kp-delta" id="dA3">—</div></div>
-        <div class="card" id="kA4"><div class="kp-name">SOFR–IORB 스프레드</div><div class="kp-val loading" id="vA4">로딩중</div><div class="kp-delta" id="dA4">—</div></div>
-        <div class="card" id="kA5"><div class="kp-name">역레포 (ON RRP)</div><div class="kp-val loading" id="vA5">로딩중</div><div class="kp-delta" id="dA5">—</div></div>
-        <div class="card" id="kA6"><div class="kp-name">준비금+역레포 버퍼</div><div class="kp-val loading" id="vA6">로딩중</div><div class="kp-delta" id="dA6">—</div></div>
-        <div class="card" id="kA7"><div class="kp-name">TGA 잔고</div><div class="kp-val loading" id="vA7">로딩중</div><div class="kp-delta" id="dA7">—</div></div>
-        <div class="card" id="kA8"><div class="kp-name">HY OAS</div><div class="kp-val loading" id="vA8">로딩중</div><div class="kp-delta" id="dA8">—</div></div>
-        <div class="card" id="kA9"><div class="kp-name">광의 달러지수</div><div class="kp-val loading" id="vA9">로딩중</div><div class="kp-delta" id="dA9">—</div></div>
-        <div class="card" id="kA10"><div class="kp-name">SLOOS 대출 기준</div><div class="kp-val loading" id="vA10">로딩중</div><div class="kp-delta" id="dA10">—</div></div>
-        <div class="card" id="kA11"><div class="kp-name">MMF 총자산</div><div class="kp-val loading" id="vA11">로딩중</div><div class="kp-delta" id="dA11">—</div></div>
-        <div class="card" id="kA12"><div class="kp-name">PD 순포지션</div><div class="kp-val loading" id="vA12">—</div><div class="kp-delta" id="dA12">NY Fed 주간</div></div>
+      <div class="kpi-grid c4" id="gridA">
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'TOTRESNS','은행 준비금','reserveT','십억달러(B)→조달러','6M,1Y,2Y,3Y,5Y','linear')"><div class="card" id="kA1"><div class="kp-name">은행 준비금</div><div class="kp-val loading" id="vA1">로딩중</div><div class="kp-delta" id="dA1">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'SOFR','SOFR 금리','pct','%','1M,3M,6M,1Y,2Y','linear')"><div class="card" id="kA2"><div class="kp-name">SOFR</div><div class="kp-val loading" id="vA2">로딩중</div><div class="kp-delta" id="dA2">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'IORB','IORB 금리','pct','%','1M,3M,6M,1Y,2Y','linear')"><div class="card" id="kA3"><div class="kp-name">IORB</div><div class="kp-val loading" id="vA3">로딩중</div><div class="kp-delta" id="dA3">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'SOFR','SOFR–IORB 스프레드','spread','%','1M,3M,6M,1Y','linear')"><div class="card" id="kA4"><div class="kp-name">SOFR–IORB 스프레드</div><div class="kp-val loading" id="vA4">로딩중</div><div class="kp-delta" id="dA4">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'RRPONTSYD','역레포 (ON RRP)','rrpB','십억달러','6M,1Y,2Y,3Y','linear')"><div class="card" id="kA5"><div class="kp-name">역레포 (ON RRP)</div><div class="kp-val loading" id="vA5">로딩중</div><div class="kp-delta" id="dA5">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'TOTRESNS','준비금+역레포 버퍼','reserveT','조달러','6M,1Y,2Y,3Y','linear')"><div class="card" id="kA6"><div class="kp-name">준비금+역레포 버퍼</div><div class="kp-val loading" id="vA6">로딩중</div><div class="kp-delta" id="dA6">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'WTREGEN','TGA 잔고','tgaT','백만달러','1M,3M,6M,1Y,2Y','linear')"><div class="card" id="kA7"><div class="kp-name">TGA 잔고</div><div class="kp-val loading" id="vA7">로딩중</div><div class="kp-delta" id="dA7">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'BAMLH0A0HYM2','하이일드 스프레드 (HY OAS)','bp','베이시스포인트','1Y,2Y,3Y,5Y','linear')"><div class="card" id="kA8"><div class="kp-name">HY OAS</div><div class="kp-val loading" id="vA8">로딩중</div><div class="kp-delta" id="dA8">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'DTWEXBGS','광의 달러지수 (Broad DXY)','idx','지수','1Y,2Y,3Y,5Y','linear')"><div class="card" id="kA9"><div class="kp-name">광의 달러지수</div><div class="kp-val loading" id="vA9">로딩중</div><div class="kp-delta" id="dA9">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'DRTSCILM','SLOOS C&amp;I 대출 기준','pct','%','2Y,5Y,10Y','linear')"><div class="card" id="kA10"><div class="kp-name">SLOOS 대출 기준</div><div class="kp-val loading" id="vA10">로딩중</div><div class="kp-delta" id="dA10">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'WRMFNS','MMF 총자산','mmfB','십억달러','1Y,2Y,3Y,5Y','linear')"><div class="card" id="kA11"><div class="kp-name">MMF 총자산</div><div class="kp-val loading" id="vA11">로딩중</div><div class="kp-delta" id="dA11">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap"><div class="card" id="kA12"><div class="kp-name">PD 순포지션</div><div class="kp-val loading" id="vA12">—</div><div class="kp-delta" id="dA12">NY Fed 주간</div></div></div>
       </div>
     </div>
 
@@ -378,16 +442,16 @@ input[type=range]{flex:1;accent-color:var(--amber);}
     </div>
     <!-- 금리 KPI -->
     <div style="margin-top:12px;">
-      <div class="kpi-grid c4">
-        <div class="card" id="kB1"><div class="kp-name">2년 국채</div><div class="kp-val loading" id="vB1">로딩중</div><div class="kp-delta" id="dB1">—</div></div>
-        <div class="card" id="kB2"><div class="kp-name">5년 국채</div><div class="kp-val loading" id="vB2">로딩중</div><div class="kp-delta" id="dB2">—</div></div>
-        <div class="card" id="kB3"><div class="kp-name">10년 국채</div><div class="kp-val loading" id="vB3">로딩중</div><div class="kp-delta" id="dB3">—</div></div>
-        <div class="card" id="kB4"><div class="kp-name">30년 국채</div><div class="kp-val loading" id="vB4">로딩중</div><div class="kp-delta" id="dB4">—</div></div>
-        <div class="card" id="kB5"><div class="kp-name">2s10s 스프레드</div><div class="kp-val loading" id="vB5">로딩중</div><div class="kp-delta" id="dB5">—</div></div>
-        <div class="card" id="kB6"><div class="kp-name">3m10y 스프레드</div><div class="kp-val loading" id="vB6">로딩중</div><div class="kp-delta" id="dB6">—</div></div>
-        <div class="card" id="kB7"><div class="kp-name">TIPS 10Y 실질금리</div><div class="kp-val loading" id="vB7">로딩중</div><div class="kp-delta" id="dB7">—</div></div>
-        <div class="card" id="kB8"><div class="kp-name">기대 인플레이션 10Y</div><div class="kp-val loading" id="vB8">로딩중</div><div class="kp-delta" id="dB8">—</div></div>
-        <div class="card" id="kB9"><div class="kp-name">실효 Fed Funds Rate</div><div class="kp-val loading" id="vB9">로딩중</div><div class="kp-delta" id="dB9">—</div></div>
+      <div class="kpi-grid c4" id="gridB">
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'DGS2','2년 국채 금리','pct','%','6M,1Y,2Y,3Y,5Y','linear')"><div class="card" id="kB1"><div class="kp-name">2년 국채</div><div class="kp-val loading" id="vB1">로딩중</div><div class="kp-delta" id="dB1">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'DGS5','5년 국채 금리','pct','%','6M,1Y,2Y,3Y,5Y','linear')"><div class="card" id="kB2"><div class="kp-name">5년 국채</div><div class="kp-val loading" id="vB2">로딩중</div><div class="kp-delta" id="dB2">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'DGS10','10년 국채 금리','pct','%','6M,1Y,2Y,3Y,5Y','linear')"><div class="card" id="kB3"><div class="kp-name">10년 국채</div><div class="kp-val loading" id="vB3">로딩중</div><div class="kp-delta" id="dB3">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'DGS30','30년 국채 금리','pct','%','6M,1Y,2Y,3Y,5Y','linear')"><div class="card" id="kB4"><div class="kp-name">30년 국채</div><div class="kp-val loading" id="vB4">로딩중</div><div class="kp-delta" id="dB4">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'T10Y2Y','2s10s 스프레드','pct','%','1Y,2Y,5Y,10Y','linear')"><div class="card" id="kB5"><div class="kp-name">2s10s 스프레드</div><div class="kp-val loading" id="vB5">로딩중</div><div class="kp-delta" id="dB5">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'T10Y3M','3m10y 스프레드','pct','%','1Y,2Y,5Y,10Y','linear')"><div class="card" id="kB6"><div class="kp-name">3m10y 스프레드</div><div class="kp-val loading" id="vB6">로딩중</div><div class="kp-delta" id="dB6">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'DFII10','TIPS 10Y 실질금리','pct','%','1Y,2Y,3Y,5Y','linear')"><div class="card" id="kB7"><div class="kp-name">TIPS 10Y 실질금리</div><div class="kp-val loading" id="vB7">로딩중</div><div class="kp-delta" id="dB7">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'T10YIE','BEI 기대인플레 10Y','pct','%','1Y,2Y,3Y,5Y','linear')"><div class="card" id="kB8"><div class="kp-name">기대 인플레이션 10Y</div><div class="kp-val loading" id="vB8">로딩중</div><div class="kp-delta" id="dB8">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'EFFR','실효 Fed Funds Rate','pct','%','1M,3M,6M,1Y,2Y','linear')"><div class="card" id="kB9"><div class="kp-name">실효 Fed Funds Rate</div><div class="kp-val loading" id="vB9">로딩중</div><div class="kp-delta" id="dB9">—</div></div><span class="expand-hint">▾</span></div>
       </div>
       <!-- 수익률 곡선 -->
       <div class="chart-block" style="margin-top:8px;">
@@ -402,19 +466,19 @@ input[type=range]{flex:1;accent-color:var(--amber);}
 
     <!-- 물가·원자재 KPI -->
     <div style="margin-top:12px;">
-      <div class="kpi-grid c4">
-        <div class="card" id="kC1"><div class="kp-name">CPI YoY</div><div class="kp-val loading" id="vC1">로딩중</div><div class="kp-delta" id="dC1">—</div></div>
-        <div class="card" id="kC2"><div class="kp-name">Core CPI YoY</div><div class="kp-val loading" id="vC2">로딩중</div><div class="kp-delta" id="dC2">—</div></div>
-        <div class="card" id="kC3"><div class="kp-name">PPI YoY</div><div class="kp-val loading" id="vC3">로딩중</div><div class="kp-delta" id="dC3">—</div></div>
-        <div class="card" id="kC4"><div class="kp-name">PCE YoY</div><div class="kp-val loading" id="vC4">로딩중</div><div class="kp-delta" id="dC4">—</div></div>
-        <div class="card" id="kC5"><div class="kp-name">미시간 인플레 기대</div><div class="kp-val loading" id="vC5">로딩중</div><div class="kp-delta" id="dC5">—</div></div>
-        <div class="card" id="kC6"><div class="kp-name">WTI 유가</div><div class="kp-val loading" id="vC6">로딩중</div><div class="kp-delta" id="dC6">—</div></div>
-        <div class="card" id="kC7"><div class="kp-name">Brent 유가</div><div class="kp-val loading" id="vC7">로딩중</div><div class="kp-delta" id="dC7">—</div></div>
-        <div class="card" id="kC8"><div class="kp-name">천연가스 (Henry Hub)</div><div class="kp-val loading" id="vC8">로딩중</div><div class="kp-delta" id="dC8">—</div></div>
-        <div class="card" id="kC9"><div class="kp-name">우라늄 (SRUUF 프록시)</div><div class="kp-val loading" id="vC9">Yahoo</div><div class="kp-delta" id="dC9">—</div></div>
-        <div class="card" id="kC10"><div class="kp-name">구리</div><div class="kp-val loading" id="vC10">로딩중</div><div class="kp-delta" id="dC10">—</div></div>
-        <div class="card" id="kC11"><div class="kp-name">알루미늄</div><div class="kp-val loading" id="vC11">로딩중</div><div class="kp-delta" id="dC11">—</div></div>
-        <div class="card" id="kC12"><div class="kp-name">밀 (Wheat)</div><div class="kp-val loading" id="vC12">로딩중</div><div class="kp-delta" id="dC12">—</div></div>
+      <div class="kpi-grid c4" id="gridC">
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'CPIAUCSL','CPI (헤드라인) YoY','yoy','%','1Y,2Y,3Y,5Y,10Y','linear')"><div class="card" id="kC1"><div class="kp-name">CPI YoY</div><div class="kp-val loading" id="vC1">로딩중</div><div class="kp-delta" id="dC1">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'CPILFESL','Core CPI YoY','yoy','%','1Y,2Y,3Y,5Y,10Y','linear')"><div class="card" id="kC2"><div class="kp-name">Core CPI YoY</div><div class="kp-val loading" id="vC2">로딩중</div><div class="kp-delta" id="dC2">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'PPIACO','PPI YoY','yoy','%','1Y,2Y,3Y,5Y','linear')"><div class="card" id="kC3"><div class="kp-name">PPI YoY</div><div class="kp-val loading" id="vC3">로딩중</div><div class="kp-delta" id="dC3">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'PCEPI','PCE YoY','yoy','%','1Y,2Y,3Y,5Y','linear')"><div class="card" id="kC4"><div class="kp-name">PCE YoY</div><div class="kp-val loading" id="vC4">로딩중</div><div class="kp-delta" id="dC4">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'MICH','미시간 인플레 기대','pct','%','1Y,2Y,3Y,5Y','linear')"><div class="card" id="kC5"><div class="kp-name">미시간 인플레 기대</div><div class="kp-val loading" id="vC5">로딩중</div><div class="kp-delta" id="dC5">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'DCOILWTICO','WTI 유가','usd','USD/배럴','6M,1Y,2Y,3Y,5Y','linear')"><div class="card" id="kC6"><div class="kp-name">WTI 유가</div><div class="kp-val loading" id="vC6">로딩중</div><div class="kp-delta" id="dC6">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'DCOILBRENTEU','Brent 유가','usd','USD/배럴','6M,1Y,2Y,3Y,5Y','linear')"><div class="card" id="kC7"><div class="kp-name">Brent 유가</div><div class="kp-val loading" id="vC7">로딩중</div><div class="kp-delta" id="dC7">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'DHHNGSP','천연가스 (Henry Hub)','usd','USD/MMBtu','6M,1Y,2Y,3Y','linear')"><div class="card" id="kC8"><div class="kp-name">천연가스 (Henry Hub)</div><div class="kp-val loading" id="vC8">로딩중</div><div class="kp-delta" id="dC8">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap"><div class="card" id="kC9"><div class="kp-name">우라늄 (SRUUF)</div><div class="kp-val loading" id="vC9">—</div><div class="kp-delta" id="dC9">Yahoo</div></div></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'PCOPPUSDM','구리 현물가','usd','USD/MT','1Y,2Y,3Y,5Y','linear')"><div class="card" id="kC10"><div class="kp-name">구리</div><div class="kp-val loading" id="vC10">로딩중</div><div class="kp-delta" id="dC10">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'PALUMUSDM','알루미늄 현물가','usd','USD/MT','1Y,2Y,3Y,5Y','linear')"><div class="card" id="kC11"><div class="kp-name">알루미늄</div><div class="kp-val loading" id="vC11">로딩중</div><div class="kp-delta" id="dC11">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'PWHEAMTUSDM','밀 현물가','usd','USD/MT','1Y,2Y,3Y,5Y','linear')"><div class="card" id="kC12"><div class="kp-name">밀 (Wheat)</div><div class="kp-val loading" id="vC12">로딩중</div><div class="kp-delta" id="dC12">—</div></div><span class="expand-hint">▾</span></div>
       </div>
     </div>
 
@@ -435,24 +499,26 @@ input[type=range]{flex:1;accent-color:var(--amber);}
   <div id="t1" style="display:none;">
     <!-- 고용·경기 KPI -->
     <div style="margin-bottom:12px;">
-      <div class="kpi-grid c4">
-      <div class="card" id="kD1"><div class="kp-name">실업률 (U-3)</div><div class="kp-val loading" id="vD1">로딩중</div><div class="kp-delta" id="dD1">—</div></div>
-      <div class="card" id="kD2"><div class="kp-name">비농업 신규고용 (NFP)</div><div class="kp-val loading" id="vD2">로딩중</div><div class="kp-delta" id="dD2">—</div></div>
-      <div class="card" id="kD3"><div class="kp-name">신규 실업수당</div><div class="kp-val loading" id="vD3">로딩중</div><div class="kp-delta" id="dD3">—</div></div>
-      <div class="card" id="kD4"><div class="kp-name">샴 룰 지수</div><div class="kp-val loading" id="vD4">로딩중</div><div class="kp-delta" id="dD4">0.5 돌파 시 침체</div></div>
-      <div class="card" id="kD5"><div class="kp-name">ISM 제조업 PMI</div><div class="kp-val loading" id="vD5">로딩중</div><div class="kp-delta" id="dD5">—</div></div>
-      <div class="card" id="kD6"><div class="kp-name">ISM 서비스업 PMI</div><div class="kp-val loading" id="vD6">로딩중</div><div class="kp-delta" id="dD6">—</div></div>
-      <div class="card" id="kD7"><div class="kp-name">경제활동참가율</div><div class="kp-val loading" id="vD7">로딩중</div><div class="kp-delta" id="dD7">—</div></div>
-      <div class="card" id="kD8"><div class="kp-name">경기선행지수 (LEI)</div><div class="kp-val loading" id="vD8">로딩중</div><div class="kp-delta" id="dD8">—</div></div>
+      <div class="kpi-grid c4" id="gridD">
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'UNRATE','실업률 (U-3)','pct','%','1Y,2Y,3Y,5Y,10Y','linear')"><div class="card" id="kD1"><div class="kp-name">실업률 (U-3)</div><div class="kp-val loading" id="vD1">로딩중</div><div class="kp-delta" id="dD1">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'PAYEMS','비농업 신규고용 (NFP)','K','천명','6M,1Y,2Y,3Y','linear')"><div class="card" id="kD2"><div class="kp-name">비농업 신규고용 (NFP)</div><div class="kp-val loading" id="vD2">로딩중</div><div class="kp-delta" id="dD2">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'ICSA','신규 실업수당','cnt','건','6M,1Y,2Y','linear')"><div class="card" id="kD3"><div class="kp-name">신규 실업수당</div><div class="kp-val loading" id="vD3">로딩중</div><div class="kp-delta" id="dD3">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'SAHMREALTIME','샴 룰 지수','sahm','','1Y,2Y,3Y,5Y','linear')"><div class="card" id="kD4"><div class="kp-name">샴 룰 지수</div><div class="kp-val loading" id="vD4">로딩중</div><div class="kp-delta" id="dD4">0.5 돌파 시 침체</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap"><div class="card" id="kD5"><div class="kp-name">ISM 제조업 PMI</div><div class="kp-val loading" id="vD5">로딩중</div><div class="kp-delta" id="dD5">50 기준선</div></div></div>
+        <div class="kpi-card-wrap"><div class="card" id="kD6"><div class="kp-name">ISM 서비스업 PMI</div><div class="kp-val loading" id="vD6">로딩중</div><div class="kp-delta" id="dD6">50 기준선</div></div></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'CIVPART','경제활동참가율','pct','%','1Y,2Y,3Y,5Y','linear')"><div class="card" id="kD7"><div class="kp-name">경제활동참가율</div><div class="kp-val loading" id="vD7">로딩중</div><div class="kp-delta" id="dD7">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'USSLIND','LEI 경기선행지수','idx','','1Y,2Y,3Y,5Y','linear')"><div class="card" id="kD8"><div class="kp-name">경기선행지수 (LEI)</div><div class="kp-val loading" id="vD8">로딩중</div><div class="kp-delta" id="dD8">—</div></div><span class="expand-hint">▾</span></div>
+      </div>
     </div>
     <!-- 소비·신뢰 KPI -->
     <div style="margin-top:12px;">
-      <div class="kpi-grid c4">
-      <div class="card" id="kE1"><div class="kp-name">미시간 소비자신뢰</div><div class="kp-val loading" id="vE1">로딩중</div><div class="kp-delta" id="dE1">—</div></div>
-      <div class="card" id="kE2"><div class="kp-name">CB 소비자신뢰</div><div class="kp-val loading" id="vE2">로딩중</div><div class="kp-delta" id="dE2">—</div></div>
-      <div class="card" id="kE3"><div class="kp-name">소매판매 MoM</div><div class="kp-val loading" id="vE3">로딩중</div><div class="kp-delta" id="dE3">—</div></div>
-      <div class="card" id="kE4"><div class="kp-name">개인저축률</div><div class="kp-val loading" id="vE4">로딩중</div><div class="kp-delta" id="dE4">—</div></div>
-      <div class="card" id="kE5"><div class="kp-name">신용카드 연체율</div><div class="kp-val loading" id="vE5">로딩중</div><div class="kp-delta" id="dE5">—</div></div>
+      <div class="kpi-grid c4" id="gridE">
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'UMCSENT','미시간 소비자신뢰','idx','','1Y,2Y,3Y,5Y','linear')"><div class="card" id="kE1"><div class="kp-name">미시간 소비자신뢰</div><div class="kp-val loading" id="vE1">로딩중</div><div class="kp-delta" id="dE1">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'CSCICP03USM665S','CB 소비자신뢰','idx','','1Y,2Y,3Y,5Y','linear')"><div class="card" id="kE2"><div class="kp-name">CB 소비자신뢰</div><div class="kp-val loading" id="vE2">로딩중</div><div class="kp-delta" id="dE2">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'RSAFS','소매판매','usd','백만달러','6M,1Y,2Y,3Y','linear')"><div class="card" id="kE3"><div class="kp-name">소매판매</div><div class="kp-val loading" id="vE3">로딩중</div><div class="kp-delta" id="dE3">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'PSAVERT','개인저축률','pct','%','1Y,2Y,3Y,5Y','linear')"><div class="card" id="kE4"><div class="kp-name">개인저축률</div><div class="kp-val loading" id="vE4">로딩중</div><div class="kp-delta" id="dE4">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'DRCCLACBS','신용카드 연체율','pct','%','2Y,3Y,5Y,10Y','linear')"><div class="card" id="kE5"><div class="kp-name">신용카드 연체율</div><div class="kp-val loading" id="vE5">로딩중</div><div class="kp-delta" id="dE5">—</div></div><span class="expand-hint">▾</span></div>
+      </div>
     </div>
     <!-- 고용 스트레스 판정 테이블 -->
     <div class="tbl-block" style="margin-top:12px;">
@@ -469,20 +535,18 @@ input[type=range]{flex:1;accent-color:var(--amber);}
   <!-- ══ TAB 2: 글로벌 ══ -->
   <div id="t2" style="display:none;">
     <!-- 글로벌 KPI -->
-    <div class="kpi-grid c4">
-        <div class="card" id="kF1"><div class="kp-name">DXY (ICE)</div><div class="kp-val loading" id="vF1">Yahoo</div><div class="kp-delta" id="dF1">실시간</div></div>
-        <div class="card" id="kF2"><div class="kp-name">광의 달러지수 (Broad)</div><div class="kp-val loading" id="vF2">로딩중</div><div class="kp-delta" id="dF2">—</div></div>
-        <div class="card" id="kF3"><div class="kp-name">금 (Gold)</div><div class="kp-val loading" id="vF3">로딩중</div><div class="kp-delta" id="dF3">—</div></div>
-        <div class="card" id="kF4"><div class="kp-name">은 (Silver)</div><div class="kp-val loading" id="vF4">로딩중</div><div class="kp-delta" id="dF4">—</div></div>
-        <div class="card" id="kF5"><div class="kp-name">금은 비율 (GSR)</div><div class="kp-val loading" id="vF5">로딩중</div><div class="kp-delta" id="dF5">80↑ = 은 저평가</div></div>
-        <div class="card" id="kF6"><div class="kp-name">VIX</div><div class="kp-val loading" id="vF6">로딩중</div><div class="kp-delta" id="dF6">—</div></div>
-        <div class="card" id="kF7"><div class="kp-name">S&amp;P 500</div><div class="kp-val loading" id="vF7">로딩중</div><div class="kp-delta" id="dF7">—</div></div>
-        <div class="card" id="kF8"><div class="kp-name">MSCI EM (EEM)</div><div class="kp-val loading" id="vF8">Yahoo</div><div class="kp-delta" id="dF8">—</div></div>
-        <div class="card" id="kF9"><div class="kp-name">한미 10Y 스프레드</div><div class="kp-val loading" id="vF9">로딩중</div><div class="kp-delta" id="dF9">CDS 프록시</div></div>
-        <div class="card" style="cursor:pointer;" onclick="window.open('https://www.worldgovernmentbonds.com/sovereign-cds/','_blank')">
-          <div class="kp-name">전세계 Sovereign CDS 5Y</div>
-          <div class="kp-val" style="font-size:13px;color:var(--btx);">바로가기 →</div>
-          <div class="kp-delta">worldgovernmentbonds.com</div>
+    <div class="kpi-grid c4" id="gridF">
+        <div class="kpi-card-wrap"><div class="card" id="kF1"><div class="kp-name">DXY (ICE)</div><div class="kp-val loading" id="vF1">Yahoo</div><div class="kp-delta" id="dF1">실시간</div></div></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'DTWEXBGS','광의 달러지수 (Broad)','idx','지수','1Y,2Y,3Y,5Y','linear')"><div class="card" id="kF2"><div class="kp-name">광의 달러지수 (Broad)</div><div class="kp-val loading" id="vF2">로딩중</div><div class="kp-delta" id="dF2">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'GOLDPMGBD228NLBM','금 (Gold) LBMA PM Fix','usd','USD/troy oz','6M,1Y,2Y,3Y,5Y','linear')"><div class="card" id="kF3"><div class="kp-name">금 (Gold)</div><div class="kp-val loading" id="vF3">로딩중</div><div class="kp-delta" id="dF3">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap"><div class="card" id="kF4"><div class="kp-name">은 (Silver)</div><div class="kp-val loading" id="vF4">로딩중</div><div class="kp-delta" id="dF4">Yahoo SI=F</div></div></div>
+        <div class="kpi-card-wrap"><div class="card" id="kF5"><div class="kp-name">금은 비율 (GSR)</div><div class="kp-val loading" id="vF5">로딩중</div><div class="kp-delta" id="dF5">80↑ = 은 저평가</div></div></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'VIXCLS','VIX 공포지수','idx','포인트','6M,1Y,2Y,3Y,5Y','linear')"><div class="card" id="kF6"><div class="kp-name">VIX</div><div class="kp-val loading" id="vF6">로딩중</div><div class="kp-delta" id="dF6">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap" onclick="toggleChart(this,'SP500','S&amp;P 500','idx','포인트','6M,1Y,2Y,3Y,5Y','linear')"><div class="card" id="kF7"><div class="kp-name">S&amp;P 500</div><div class="kp-val loading" id="vF7">로딩중</div><div class="kp-delta" id="dF7">—</div></div><span class="expand-hint">▾</span></div>
+        <div class="kpi-card-wrap"><div class="card" id="kF8"><div class="kp-name">MSCI EM (EEM)</div><div class="kp-val loading" id="vF8">Yahoo</div><div class="kp-delta" id="dF8">—</div></div></div>
+        <div class="kpi-card-wrap"><div class="card" id="kF9"><div class="kp-name">한미 10Y 스프레드</div><div class="kp-val loading" id="vF9">로딩중</div><div class="kp-delta" id="dF9">CDS 프록시</div></div></div>
+        <div class="kpi-card-wrap" style="cursor:pointer;" onclick="window.open('https://www.worldgovernmentbonds.com/sovereign-cds/','_blank')">
+          <div class="card"><div class="kp-name">전세계 Sovereign CDS 5Y</div><div class="kp-val" style="font-size:13px;color:var(--btx);">바로가기 →</div><div class="kp-delta">worldgovernmentbonds.com</div></div>
         </div>
     </div>
   </div><!-- /t2 -->
@@ -490,13 +554,13 @@ input[type=range]{flex:1;accent-color:var(--amber);}
   <!-- ══ TAB 3: 암호화폐 ══ -->
   <div id="t3" style="display:none;">
     <!-- 암호화폐 KPI -->
-    <div class="kpi-grid c4">
-      <div class="card" id="kG1"><div class="kp-name">비트코인 (BTC)</div><div class="kp-val loading" id="vG1">로딩중</div><div class="kp-delta" id="dG1">—</div></div>
-      <div class="card" id="kG2"><div class="kp-name">이더리움 (ETH)</div><div class="kp-val loading" id="vG2">로딩중</div><div class="kp-delta" id="dG2">—</div></div>
-      <div class="card" id="kG3"><div class="kp-name">BTC 도미넌스</div><div class="kp-val loading" id="vG3">로딩중</div><div class="kp-delta" id="dG3">—</div></div>
-      <div class="card" id="kG4"><div class="kp-name">Crypto 공포탐욕</div><div class="kp-val loading" id="vG4">로딩중</div><div class="kp-delta" id="dG4">—</div></div>
-      <div class="card" id="kG5"><div class="kp-name">스테이블코인 시총</div><div class="kp-val loading" id="vG5">로딩중</div><div class="kp-delta" id="dG5">USDT+USDC</div></div>
-      <div class="card" id="kG6"><div class="kp-name">BTC↔S&amp;P500 상관계수</div><div class="kp-val loading" id="vG6">계산중</div><div class="kp-delta" id="dG6">30일 롤링</div></div>
+    <div class="kpi-grid c4" id="gridG">
+      <div class="kpi-card-wrap"><div class="card" id="kG1"><div class="kp-name">비트코인 (BTC)</div><div class="kp-val loading" id="vG1">로딩중</div><div class="kp-delta" id="dG1">—</div></div></div>
+      <div class="kpi-card-wrap"><div class="card" id="kG2"><div class="kp-name">이더리움 (ETH)</div><div class="kp-val loading" id="vG2">로딩중</div><div class="kp-delta" id="dG2">—</div></div></div>
+      <div class="kpi-card-wrap"><div class="card" id="kG3"><div class="kp-name">BTC 도미넌스</div><div class="kp-val loading" id="vG3">로딩중</div><div class="kp-delta" id="dG3">—</div></div></div>
+      <div class="kpi-card-wrap"><div class="card" id="kG4"><div class="kp-name">Crypto 공포탐욕</div><div class="kp-val loading" id="vG4">로딩중</div><div class="kp-delta" id="dG4">—</div></div></div>
+      <div class="kpi-card-wrap"><div class="card" id="kG5"><div class="kp-name">스테이블코인 시총</div><div class="kp-val loading" id="vG5">로딩중</div><div class="kp-delta" id="dG5">USDT+USDC</div></div></div>
+      <div class="kpi-card-wrap"><div class="card" id="kG6"><div class="kp-name">BTC↔S&amp;P500 상관계수</div><div class="kp-val loading" id="vG6">계산중</div><div class="kp-delta" id="dG6">30일 롤링</div></div></div>
     </div>
     <div class="chart-block" style="margin-top:10px;">
       <div class="chart-hdr"><span class="chart-title">BTC 가격 추이 (30일)</span></div>
@@ -1478,6 +1542,264 @@ async function loadYahoo() {
     setKpi('F4', '—', 'Yahoo 연결 실패');
     console.error('Yahoo load error:', e);
   }
+}
+
+// ═══════════════════════════════════════════
+// 차트 엔진 — 인라인 아코디언 Chart.js
+// ═══════════════════════════════════════════
+
+// 열린 차트 인스턴스 저장
+const chartInstances = {};
+// 차트 히스토리 캐시 (SERIES+PERIOD 별)
+const chartDataCache = {};
+
+// 기간 → FRED limit/frequency 변환
+const PERIOD_LIMITS = {
+  '1M': {limit:35,  freq:'d'},
+  '3M': {limit:95,  freq:'d'},
+  '6M': {limit:185, freq:'d'},
+  '1Y': {limit:370, freq:'d'},
+  '2Y': {limit:740, freq:'d'},
+  '3Y': {limit:1100,freq:'d'},
+  '5Y': {limit:1830,freq:'d'},
+  '10Y':{limit:3660,freq:'d'},
+};
+
+// 지표별 해설 (선택 적용)
+const CHART_INTERP = {
+  SOFR: '<strong>SOFR</strong>는 미국 단기 기준금리의 실질 벤치마크. IORB와의 스프레드가 +10bp 초과 시 단기자금시장 마찰 신호.',
+  BAMLH0A0HYM2: '<strong>하이일드 스프레드</strong>는 정크본드와 국채의 금리 차이. 300bp 이하=탐욕, 400bp=경고, 600bp 이상=경색. 신용시장 스트레스의 선행지표.',
+  T10Y2Y: '<strong>2s10s 스프레드</strong>: 역전(-) 구간이 12~24개월 지속되면 경기침체 선행. 현재 역전 해소 중 여부 주목.',
+  UNRATE: '<strong>실업률</strong> 3개월 이동평균이 직전 12개월 저점 대비 0.5%p 상승 시 샴 룰 발동 = 침체 확인 신호.',
+  SAHMREALTIME: '<strong>샴 룰</strong>: 0.5 돌파는 역사적으로 100% 침체 동반. 현재 수준이 0.3 초과 시 선제적 경보.',
+  DGS10: '<strong>10년물 국채금리</strong>는 글로벌 자산가격의 할인율. 금·주식·부동산 밸류에이션에 역방향 압력.',
+  VIXCLS: '<strong>VIX</strong> 20 미만=안정, 20~30=주의, 30 이상=공포, 40 이상=위기. 급등 후 빠른 하락은 반등 신호.',
+  SP500: '<strong>S&P 500</strong>. 200일 이동평균 하방 돌파 시 기술적 약세장 진입 기준.',
+  WTREGEN: '<strong>TGA</strong>는 재무부의 당좌계좌. 잔고 급감=시중 유동성 공급, 급증=유동성 흡수 효과.',
+  TOTRESNS: '<strong>은행 준비금</strong> + 역레포 합산이 $2.5T 하회 시 단기자금 경색 위험. 2019년 레포 위기 참고.',
+};
+
+async function toggleChart(wrap, seriesId, label, unitType, unitLabel, periodsStr, scaleType) {
+  // 이미 열려있으면 닫기
+  const existingPanel = wrap.querySelector('.chart-panel');
+  if (existingPanel) {
+    if (existingPanel.classList.contains('open')) {
+      existingPanel.classList.remove('open');
+      setTimeout(() => existingPanel.remove(), 200);
+      wrap.classList.remove('expanded');
+      if (chartInstances[seriesId]) {
+        chartInstances[seriesId].destroy();
+        delete chartInstances[seriesId];
+      }
+      return;
+    }
+  }
+
+  wrap.classList.add('expanded');
+
+  // 패널 생성
+  const periods = periodsStr.split(',');
+  const defaultPeriod = periods.includes('1Y') ? '1Y' : periods[0];
+
+  const panel = document.createElement('div');
+  panel.className = 'chart-panel';
+  panel.style.cssText = 'grid-column:1/-1;';
+  panel.innerHTML = `
+    <div class="cp-header">
+      <div>
+        <div class="cp-title">${label}</div>
+        <div class="cp-series">${seriesId} · FRED · ${unitLabel}</div>
+      </div>
+      <div class="cp-period-btns" id="cpbtns-${seriesId}">
+        ${periods.map(p=>`<button class="cp-btn${p===defaultPeriod?' active':''}" onclick="changeChartPeriod('${seriesId}','${p}','${unitType}','${scaleType}',this)">${p}</button>`).join('')}
+      </div>
+      <button class="cp-close" onclick="event.stopPropagation();toggleChart(this.closest('.kpi-card-wrap'),'${seriesId}','${label}','${unitType}','${unitLabel}','${periodsStr}','${scaleType}')">✕</button>
+    </div>
+    <div id="cpwrap-${seriesId}">
+      <div class="cp-loading" id="cpload-${seriesId}">📊 데이터 로딩중...</div>
+    </div>
+    ${CHART_INTERP[seriesId] ? `<div class="cp-interp">${CHART_INTERP[seriesId]}</div>` : ''}
+  `;
+
+  // grid 안에 full-width로 삽입 (wrap 부모가 grid)
+  const grid = wrap.parentElement;
+  // wrap 다음에 삽입
+  wrap.after(panel);
+  requestAnimationFrame(() => panel.classList.add('open'));
+
+  // 차트 데이터 로드
+  await loadChartData(seriesId, defaultPeriod, unitType, scaleType);
+}
+
+async function changeChartPeriod(seriesId, period, unitType, scaleType, btn) {
+  // 버튼 active 교체
+  btn.closest('.cp-period-btns').querySelectorAll('.cp-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  // 기존 차트 destroy
+  if (chartInstances[seriesId]) {
+    chartInstances[seriesId].destroy();
+    delete chartInstances[seriesId];
+  }
+  const wrap = document.getElementById('cpwrap-'+seriesId);
+  if (wrap) wrap.innerHTML = `<div class="cp-loading" id="cpload-${seriesId}">📊 ${period} 데이터 로딩중...</div>`;
+  await loadChartData(seriesId, period, unitType, scaleType);
+}
+
+async function loadChartData(seriesId, period, unitType, scaleType) {
+  const cacheKey = `${seriesId}__${period}`;
+  let obs = chartDataCache[cacheKey];
+
+  if (!obs) {
+    try {
+      const {limit} = PERIOD_LIMITS[period] || {limit:370};
+      const resp = await fetch(`${WORKER}/fred?series_id=${seriesId}&limit=${limit}&sort_order=desc`);
+      const json = await resp.json();
+      obs = (json.observations || []).filter(o => o.value !== '.').reverse();
+      chartDataCache[cacheKey] = obs;
+    } catch(e) {
+      const load = document.getElementById('cpload-'+seriesId);
+      if (load) load.textContent = '⚠️ 로딩 실패: ' + e.message;
+      return;
+    }
+  }
+
+  renderChart(seriesId, obs, unitType, scaleType, period);
+}
+
+function renderChart(seriesId, obs, unitType, scaleType, period) {
+  const wrap = document.getElementById('cpwrap-'+seriesId);
+  if (!wrap) return;
+
+  // YoY 계산 필요한 지표
+  let labels, values;
+  if (unitType === 'yoy') {
+    // 월간 데이터 → YoY % 계산
+    const filteredObs = obs.filter(o => o.value !== '.');
+    const yoyData = [];
+    for (let i = 12; i < filteredObs.length; i++) {
+      const cur = parseFloat(filteredObs[i].value);
+      const yr  = parseFloat(filteredObs[i-12].value);
+      if (!isNaN(cur) && !isNaN(yr) && yr !== 0) {
+        yoyData.push({ date: filteredObs[i].date, value: ((cur-yr)/Math.abs(yr))*100 });
+      }
+    }
+    // 기간 필터
+    const cutoff = getCutoffDate(period);
+    const filtered = yoyData.filter(d => d.date >= cutoff);
+    labels = filtered.map(d => d.date);
+    values = filtered.map(d => d.value);
+  } else {
+    const cutoff = getCutoffDate(period);
+    const filtered = obs.filter(o => o.date >= cutoff && o.value !== '.');
+    labels = filtered.map(o => o.date);
+    values = filtered.map(o => parseFloat(o.value));
+  }
+
+  if (!values.length) {
+    wrap.innerHTML = `<div class="cp-loading">데이터 없음 (${period})</div>`;
+    return;
+  }
+
+  // 색상 결정
+  const isDark = document.documentElement.classList.contains('dark');
+  const gridColor  = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)';
+  const textColor  = isDark ? '#8B949E' : '#656D76';
+  const lineColor  = '#0969DA';
+  const fillColor  = isDark ? 'rgba(9,105,218,0.12)' : 'rgba(9,105,218,0.08)';
+
+  // 특수 색상 (위험 지표)
+  const dangerSeries = ['BAMLH0A0HYM2','T10Y2Y','T10Y3M','SAHMREALTIME','VIXCLS'];
+  const isNeg = dangerSeries.includes(seriesId) && values[values.length-1] < 0;
+  const lineC  = dangerSeries.includes(seriesId) ? '#CF222B' : lineColor;
+  const fillC  = dangerSeries.includes(seriesId) ? 'rgba(207,34,43,0.08)' : fillColor;
+
+  // 0선 플러그인 (스프레드 계열)
+  const zeroLine = ['T10Y2Y','T10Y3M'].includes(seriesId);
+
+  wrap.innerHTML = `<div class="cp-canvas-wrap"><canvas id="cpcvs-${seriesId}"></canvas></div>`;
+
+  const ctx = document.getElementById('cpcvs-'+seriesId);
+  if (!ctx) return;
+
+  // 라벨 간격 조정 (너무 많으면 n개마다)
+  const maxLabels = 8;
+  const step = Math.max(1, Math.floor(labels.length / maxLabels));
+  const displayLabels = labels.map((l, i) => i % step === 0 ? l.slice(0,7) : '');
+
+  chartInstances[seriesId] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: displayLabels,
+      datasets: [{
+        data: values,
+        borderColor: lineC,
+        backgroundColor: fillC,
+        borderWidth: 1.5,
+        fill: true,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        tension: 0.3,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode:'index', intersect:false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: isDark ? '#161B22' : '#fff',
+          borderColor: isDark ? '#30363D' : '#D0D7DE',
+          borderWidth: 1,
+          titleColor: textColor,
+          bodyColor: isDark ? '#E6EDF3' : '#1F2328',
+          bodyFont: { family:'-apple-system,sans-serif', size:11 },
+          callbacks: {
+            label: (ctx) => {
+              const v = ctx.parsed.y;
+              if (unitType==='pct'||unitType==='yoy'||unitType==='sahm') return ` ${v.toFixed(2)}%`;
+              if (unitType==='bp')    return ` ${v.toFixed(0)} bp`;
+              if (unitType==='usd')   return ` $${v.toFixed(2)}`;
+              if (unitType==='reserveT'||unitType==='rrpB'||unitType==='tgaT'||unitType==='mmfB') return ` $${v.toFixed(1)}`;
+              return ` ${v.toFixed(2)}`;
+            }
+          }
+        },
+        annotation: zeroLine ? {
+          annotations: { zeroLine: { type:'line', yMin:0, yMax:0, borderColor:'#CF222B', borderWidth:1, borderDash:[4,4] } }
+        } : {}
+      },
+      scales: {
+        x: {
+          ticks: { color:textColor, font:{size:9}, maxRotation:0 },
+          grid:  { color:gridColor, lineWidth:.5 },
+        },
+        y: {
+          type: scaleType || 'linear',
+          ticks: {
+            color:textColor, font:{size:9},
+            callback: (v) => {
+              if (unitType==='pct'||unitType==='yoy'||unitType==='sahm') return v.toFixed(1)+'%';
+              if (unitType==='bp')    return v.toFixed(0)+'bp';
+              if (unitType==='usd')   return '$'+v.toFixed(0);
+              if (unitType==='reserveT') return '$'+v.toFixed(1)+'T';
+              if (unitType==='rrpB'||unitType==='mmfB') return '$'+v.toFixed(0)+'B';
+              return v.toFixed(1);
+            }
+          },
+          grid: { color:gridColor, lineWidth:.5 },
+        }
+      }
+    }
+  });
+}
+
+function getCutoffDate(period) {
+  const now = new Date();
+  const map = {'1M':1,'3M':3,'6M':6,'1Y':12,'2Y':24,'3Y':36,'5Y':60,'10Y':120};
+  const months = map[period] || 12;
+  now.setMonth(now.getMonth() - months);
+  return now.toISOString().slice(0,10);
 }
 
 // ═══════════════════════════════════════════
